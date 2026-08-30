@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func httpReq (url string, c chan int){
+func httpGETreq (url string, c chan int){
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Request failed.", err)
@@ -28,15 +28,32 @@ func httpReq (url string, c chan int){
 
 func main() {
 	fmt.Println("Malia")
-	var URL string = "https://webhook.site/82fb4d9c-7045-4de7-b019-444bcfecc16f"
 
-	c := make(chan int)
+	fmt.Printf("Enter the URL: ")
+	var URL string
+	fmt.Scan(&URL)
 
-	for i := 0; i < 50; i++ {
-		go httpReq(URL, c)
-	}
+	fmt.Printf("Enter the method: ")
+	var method string
+	fmt.Scan(&method)
 
-	for i := 0; i < 50; i++ {
-		fmt.Println(<-c)
+	fmt.Printf("Enter the number of simultaneous reqs: ")
+	var N int
+	fmt.Scan(&N)
+
+	switch method {
+	case "GET":
+		c := make(chan int)
+		var results_array []string 
+
+		for _ := 0; _ < N; _++ {
+			go httpGETreq(URL, c)
+		}
+
+		for _ := 0; _ < N; _++ {
+			results_array = append(results_array, <-c)
+		} 
+
+
 	}
 }
