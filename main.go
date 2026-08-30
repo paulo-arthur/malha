@@ -9,7 +9,8 @@ import (
 func httpGETreq (url string, c chan int){
 	resp, err := http.Get(url)
 	if err != nil {
-		fmt.Println("Request failed.", err)
+		fmt.Println("Request failed: ", err)
+		c <- 0
 		return
 	}
 
@@ -18,6 +19,7 @@ func httpGETreq (url string, c chan int){
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Failed to read body", err)
+		c <- 0
 		return
 	}
 
@@ -44,16 +46,16 @@ func main() {
 	switch method {
 	case "GET":
 		c := make(chan int)
-		var results_array []string 
+		var results_array []int 
 
-		for _ := 0; _ < N; _++ {
+		for i := 0; i < N; i++ {
 			go httpGETreq(URL, c)
 		}
 
-		for _ := 0; _ < N; _++ {
+		for i := 0; i < N; i++ {
 			results_array = append(results_array, <-c)
 		} 
 
-
+		
 	}
 }
