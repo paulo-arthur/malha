@@ -4,9 +4,21 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"bytes"
 )
 
-func httpGETreq (url string, c chan int){
+func readFile(path string) string {
+	content, err := os.ReadFile(path)
+	
+	if err != nil {
+		fmt.Printf("Failed to read the file: %s", err)
+	}
+
+	return string(content)
+}
+
+func httpGETreq(url string, c chan int){
 	resp, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Request failed: ", err)
@@ -28,8 +40,33 @@ func httpGETreq (url string, c chan int){
 	c <- resp.StatusCode
 }
 
+func httpPOSTreq(url string, filepath string, c chan int) {
+	binary_payload := []byte(readFile(filepath))
+
+	req_structure, err := http.NewRequest("POST", url, bytes.NewBuffer(binary_payload))
+	if err != nil {
+		fmt.Print("Something went wrong...", err)
+		return 
+	}
+
+	//req_structure.Header.Set("")
+
+	client := &http.Client{}
+	resp, err := client.Do(req_structure)
+	if err != nil {
+		fmt.Println("Something went wrong...", err)
+		return 
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+
+	fmt.Println("Status Code: ", resp.StatusCode)
+	fmt.Println(string(bodyBytes))
+}
+
 func main() {
-	fmt.Println("Malia")
+	fmt.Println("-- MALIA - Go Fuzzler")
 
 	fmt.Printf("Enter the URL: ")
 	var URL string
@@ -55,6 +92,14 @@ func main() {
 		for i := 0; i < N; i++ {
 			results_array = append(results_array, <-c)
 		} 
+
+	case "POST":
+		fmt.Printf("Enter the path to the payload file: ")
+		var path string
+		fmt.Scan(&path)
+		
+		c := make(chan int)
+		httpPOSTreq(URL, path, c)
 
 		
 	}
