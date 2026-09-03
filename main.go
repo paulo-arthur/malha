@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"net"
 )
 
 func readSinglePayloadFromFile(filePath string) string {
@@ -37,6 +38,35 @@ func readMultiplePayloadsFromFile(filePath string) ([]string, int) {
 
 	fmt.Println(formattedPayloadsList)
 	return formattedPayloadsList, len(formattedPayloadsList)
+}
+
+func sendRawTCPRequest(url string, ip string, payload []string) {
+	conn, err := net.Dial("tcp", ip)
+	if err != nil {
+		fmt.Println("Something went wrong on connecting via TCP... > ", err)
+	}
+
+	defer conn.Close()
+
+	reader := bufio.NewReader(conn)
+
+
+	for i, p := range payload {
+		_, err := conn.Write([]byte(p))
+		if err != nil {
+			log.Printf("Failed to send data: %v", err)
+			return 
+		}
+
+		response, err := reader.ReadString('\n')
+		if err != nil {
+			fmt.Printf("Failed to read response from server: %v", err)
+			return
+		}
+
+		fmt.Printf("Received from server: %s", response)
+
+	}
 }
 
 func sendGetRequest(targetUrl string, statusCodeChannel chan int) {
@@ -106,6 +136,8 @@ func main() {
 	fmt.Scan(&workerCount)
 
 	switch httpMethod {
+	case "TCP":
+
 	case "GET":
 		statusCodeChannel := make(chan int)
 		var statusCodesList []int
